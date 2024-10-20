@@ -1,6 +1,6 @@
 import numpy as np
 
-from canonical_form import canonical_form
+from simplex.canonical_form import canonical_form
 
 def has_solution(A, b):
     # Ensure A is a 2D array and b is a 1D array
@@ -61,6 +61,17 @@ def simplex_solver(A, b, c, basis: list[int], z: int, iterations=1):
 
         if all(new_A[:, k]) <= 0:
             print("LP is unbounded.")
+
+            x = np.array([0]*len(new_c))
+            d = np.array([0]*len(new_c))
+
+            for index, value in enumerate(basis):
+                x[value] = new_b[index][0]
+                d[value] = -new_A[:, k][index]
+
+            d[k] = 1
+            print(f"Certificate of unboundedness: x = {x}, d = {d}. All x(t) = x + td (t ≥ 0) are feasible.")
+                
         else:
             print(f"Performing Bland's rule...\n")
             print(f"Entering variable: k = {k+1}.\nFinding the leaving variable...\n")
@@ -73,15 +84,16 @@ def simplex_solver(A, b, c, basis: list[int], z: int, iterations=1):
             t = 1000000000
             for i in range(len(basis)):
                 if new_A[i, k] <= 0:
-                    print(f"i = {i+1} ≤ 0 - unusable")
+                    print(f"i = {i+1} - A_ik = {new_A[i, k]} ≤ 0 - unusable")
                 else:
-                    ratio = b[i]/new_A[i, k]
-                    print(f"i = {i} - Ratio: {b[i]}/{new_A[i, k]} = {ratio}")
+                    ratio = b[i][0]/new_A[i, k]
+                    print(f"i = {i+1} - A_ik = {new_A[i, k]} - Ratio: {b[i][0]}/{new_A[i, k]} = {ratio}")
                     if ratio < t:
                         l = basis[i]
-                        t = b[i]/new_A[i, k]
+                        t = ratio
 
-            print(f"\nLeaving variable: {l+1}")
+            print(f"\nMinimum ratio was {t}.")
+            print(f"Leaving variable: element {l+1} of original basis {[b+1 for b in basis]} -> {l+1}")
 
             # Remove leaving variable
             basis.remove(l)
